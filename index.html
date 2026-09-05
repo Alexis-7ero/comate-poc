@@ -6,12 +6,14 @@
 <pre id="log" style="font-family:monospace;font-size:12px"></pre>
 <script>
 const log=m=>{document.getElementById('log').textContent+=m+"\n";};
-const ALIASES=['127.0.0.1','127.1.0.1','127.2.0.1','127.3.0.1','127.4.0.1','127.5.0.1','127.6.0.1','127.7.0.1','127.8.0.1','127.9.0.1','127.10.0.1','127.11.0.1'];
+const ALIASES=Array.from({length:24},(_,i)=>'127.'+i+'.0.1');
 async function probe(p,alias){
   try{
-    const c=new AbortController(); const t=setTimeout(()=>c.abort(),400);
-    await fetch('http://'+alias+':'+p+'/health',{mode:'no-cors',signal:c.signal});
-    clearTimeout(t); return true;
+    await Promise.race([
+      fetch('http://'+alias+':'+p+'/health',{mode:'no-cors',cache:'no-store'}),
+      new Promise((_,rej)=>setTimeout(()=>rej('t'),300))
+    ]);
+    return true;
   }catch(e){ return false; }
 }
 (async()=>{
@@ -19,7 +21,7 @@ async function probe(p,alias){
   let open=[];
   if(force){ open=[Number(force)]; log('forced port '+force); }
   else{
-    let idx=0; const BASE=8000,N=1001,CONC=90; const t0=Date.now();
+    let idx=0; const BASE=8000,N=1001,CONC=144; const t0=Date.now();
     await Promise.all(Array.from({length:CONC},async()=>{
       while(idx<N){ const my=idx++; const p=BASE+my;
         if(await probe(p,ALIASES[my%ALIASES.length])) open.push(p); }
