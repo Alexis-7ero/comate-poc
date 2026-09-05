@@ -8,24 +8,29 @@
 const log=m=>{document.getElementById('log').textContent+=m+"
 ";};
 const ALIASES=['127.0.0.1','127.1.0.1','127.2.0.1','127.3.0.1','127.4.0.1','127.5.0.1','127.6.0.1','127.7.0.1','127.8.0.1','127.9.0.1','127.10.0.1','127.11.0.1'];
-async function probe(p,alias){
+async function probe(p,alias,ms){
   try{
-    const c=new AbortController(); const t=setTimeout(()=>c.abort(),400);
+    const c=new AbortController(); const t=setTimeout(()=>c.abort(),ms);
     await fetch('http://'+alias+':'+p+'/health',{mode:'no-cors',signal:c.signal});
     clearTimeout(t); return true;
   }catch(e){ return false; }
+}
+async function scanAll(tag,aliasFn,conc,ms){
+  let open=[],idx=0; const t0=Date.now();
+  await Promise.all(Array.from({length:conc},async()=>{
+    while(idx<1001){ const my=idx++; const p=8000+my;
+      if(await probe(p,aliasFn(my),ms)) open.push(p); }
+  }));
+  log(tag+' '+((Date.now()-t0)/1000).toFixed(1)+'s, open: '+(open.join(',')||'none'));
+  return open;
 }
 (async()=>{
   const qp=new URLSearchParams(location.search); const force=qp.get('port');
   let open=[];
   if(force){ open=[Number(force)]; log('forced port '+force); }
   else{
-    let idx=0; const BASE=8000,N=1001,CONC=90; const t0=Date.now();
-    await Promise.all(Array.from({length:CONC},async()=>{
-      while(idx<N){ const my=idx++; const p=BASE+my;
-        if(await probe(p,ALIASES[my%ALIASES.length])) open.push(p); }
-    }));
-    log('scan '+((Date.now()-t0)/1000).toFixed(1)+'s, open: '+(open.join(',')||'none'));
+    open=await scanAll('fast',my=>ALIASES[my%12],90,400);
+    if(!open.length){ open=await scanAll('thorough',()=> '127.0.0.1',30,1200); }
   }
   if(!open.length){ log('no local service found in 8000-9000'); return; }
   for(const p of open){
